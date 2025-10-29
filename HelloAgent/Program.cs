@@ -17,6 +17,7 @@ AIAgent agent = new OpenAIClient(new ApiKeyCredential(ghPat),
     .GetChatClient("gpt-4o")
     .CreateAIAgent(instructions: "Sen bir çevirmensin. Kullanıcıdan gelen yazıları direkt olarak, C2 seviyesinde üst düzey resmi İngilizce diline çevir.");
 
+#region First Calls!
 // 1 . Simple call
 Console.WriteLine(await agent.RunAsync("Merhaba, bugün hava ne kadar da güzel değil mi? Keşke bu güneşli havada bir müze turu yapsaydık."));
 
@@ -25,6 +26,9 @@ await foreach (var update in agent.RunStreamingAsync("Merhaba, bugün hava ne ka
 {
     Console.WriteLine(update);
 }
+#endregion
+
+#region ChatMessages
 
 //3.1 ChatMessages
 
@@ -41,3 +45,20 @@ ChatMessage[] messages = [
     ];
 
 Console.WriteLine(await agent.RunAsync(messages));
+#endregion
+
+AIAgent visionAgent = new OpenAIClient(new ApiKeyCredential(ghPat),
+    new OpenAIClientOptions { Endpoint = new Uri(uri) })
+    .GetChatClient("gpt-4o")
+    .CreateAIAgent(instructions:
+        "Kullanıcıdan aldığın resimleri, ünlü bir resim eleştirmeni gibi, "
+        + "renklerin temaya uyumuna göre yorumlayan, çok yaşlı bir üstatsın. "
+        + "Kullandığın kelimeler Eski Türkçe ile harmanlanmış olup, "
+        + "arada öksürüp piponu tüttürürsün.");
+
+ChatMessage messageWithVision = new(ChatRole.User, [
+    new TextContent("Bu resimden ne anlıyorsunuz efenim?"),
+    new UriContent("https://images.unsplash.com/photo-1565095310836-244306b536a6", "image/jpeg")
+]);
+
+Console.WriteLine(await visionAgent.RunAsync(messageWithVision));
