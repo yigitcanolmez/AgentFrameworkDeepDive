@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloAgent", "HelloAgent\He
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicConversationThread", "BasicConversationThread\BasicConversationThread.csproj", "{B944550F-D220-48AA-9111-8CAFE1867DD2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgenticUserForm", "AgenticUserForm\AgenticUserForm.csproj", "{5EC02F58-227A-4703-BB83-EA5958F383C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionCallingWithDI", "FunctionCallingWithDI\FunctionCallingWithDI.csproj", "{2C083127-EC34-4175-BBCB-122AFFC4CD49}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{B944550F-D220-48AA-9111-8CAFE1867DD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B944550F-D220-48AA-9111-8CAFE1867DD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B944550F-D220-48AA-9111-8CAFE1867DD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EC02F58-227A-4703-BB83-EA5958F383C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EC02F58-227A-4703-BB83-EA5958F383C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EC02F58-227A-4703-BB83-EA5958F383C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EC02F58-227A-4703-BB83-EA5958F383C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C083127-EC34-4175-BBCB-122AFFC4CD49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C083127-EC34-4175-BBCB-122AFFC4CD49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C083127-EC34-4175-BBCB-122AFFC4CD49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C083127-EC34-4175-BBCB-122AFFC4CD49}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

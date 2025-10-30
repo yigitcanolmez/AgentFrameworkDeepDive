@@ -1,0 +1,143 @@
+﻿@page "/"
+@using Microsoft.Agents.AI
+@using Microsoft.Extensions.AI
+@using OpenAI
+@using System.ClientModel
+@using _ChatMesssage = Microsoft.Extensions.AI.ChatMessage
+
+@inject IConfiguration configuration
+<PageTitle>Chat</PageTitle>
+
+<RadzenComponents />
+
+<RadzenCard Style="height:70vh; display:flex; flex-direction:column;">
+    <ChildContent>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10" Class="rz-mb-2">
+            <RadzenIcon Icon="chat" />
+            <RadzenText Text="İletişime Geçin" Class="rz-text-h6" />
+        </RadzenStack>
+        <div style="flex:1; overflow-y:auto;" class="rz-p-2 rz-border rz-rounded chat-scroll">
+            <RadzenStack Gap="8">
+                @foreach (var message in messages)
+                {
+                    <div class="chat-row @(message.Role == ChatRole.User ? "me" : "them")">
+                        <div class="chat-bubble @(message.Role == ChatRole.User ? "me" : "them")">
+                            <RadzenText Text="@message.Text" Style="@(message.Role == ChatRole.User ? null : "color:#fff")" />
+                            <div class="time">@DateTime.Now.ToString("HH:mm")</div>
+                        </div>
+                    </div>
+                }
+            </RadzenStack>
+        </div>
+        <EditForm Model="inputModel" OnValidSubmit="Send" FormName="ChatInputForm">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Stretch" Gap="8" Style="margin-top:8px;">
+                <RadzenTextArea @bind-Value="inputModel.Message" Placeholder="Mesaj yaz..." Style="flex:1" AutoResize="true" Rows="1" />
+                <RadzenButton Icon="send" ButtonStyle="ButtonStyle.Primary" Type="ButtonType.Submit" Disabled="@isStreaming" />
+            </RadzenStack>
+        </EditForm>
+    </ChildContent>
+</RadzenCard>
+
+@code {
+    private AIAgent agent;
+    private bool isStreaming;
+    private CancellationTokenSource? streamingCts;
+
+    public class InputModel
+    {
+        public string? Message { get; set; }
+    }
+
+    List<_ChatMesssage> messages = new()
+    {
+        new(ChatRole.Assistant, "Merhaba, kullanıcı kayıt formuna hoşgeldiniz :)")
+    };
+
+    protected override Task OnInitializedAsync()
+    {
+        string uri = "https://models.github.ai/inference";
+        string ghPat = configuration["GH_PAT"];
+
+        agent = new OpenAIClient(new ApiKeyCredential(ghPat),
+                                        new OpenAIClientOptions { Endpoint = new Uri(uri) })
+           .GetChatClient("gpt-4o")
+           .CreateAIAgent(instructions: @"""
+Sen, Yiğitcan Ölmez tarafından oluşturulan, bir *iletişim formu asistanısın.*
+Görevin sadece kullanıcıdan iletişim bilgilerini sırasıyla toplamak ve kayda geçirmek.
+Bu bilgilerin dışında hiçbir konuda konuşmazsın, cevap vermezsin veya yorum yapmazsın.
+Amacın sadece şu bilgileri almak:
+
+1. Ad
+2. Soyad
+3. Şirket adı
+4. Ünvan
+5. E-posta adresi
+6. Telefon numarası
+
+**Kurallar:**
+
+* Kullanıcıyla kibar ve profesyonel bir şekilde konuş.
+* Bilgileri sırasıyla iste (bir sonraki soruya geçmeden önce mevcut bilgiyi al).
+* Eğer kullanıcı başka bir konuda konuşmaya çalışırsa şu yanıtı ver:
+
+  > Üzgünüm, ben sadece iletişim bilgilerinizi toplamak için buradayım. Lütfen adınızı paylaşır mısınız?
+* Tüm bilgiler alındıktan sonra şu şekilde özetle:
+
+  > Teşekkür ederim! İşte paylaştığınız bilgiler:
+  >
+  > * Ad: …
+  > * Soyad: …
+  > * Şirket: …
+  > * Ünvan: …
+  > * E-posta: …
+  > * Telefon: …
+  >   En kısa sürede sizinle iletişime geçeceğiz.
+
+## Not
+
+* Çok cana yakın bir şekilde bol bol emojiler ile berabaer konuş. Kullanıcı ismini aldıktan sonra Bey, Hanım diye hitap et.
+""");
+
+        return base.OnInitializedAsync();
+    }
+
+    InputModel inputModel = new();
+
+    async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(inputModel.Message) || isStreaming) return;
+
+        messages.Add(new _ChatMesssage(ChatRole.User, inputModel.Message));
+        var history = messages.ToArray();
+        inputModel.Message = string.Empty;
+
+        streamingCts?.Cancel();
+        streamingCts = new CancellationTokenSource();
+        isStreaming = true;
+
+        messages.Add(new _ChatMesssage(ChatRole.Assistant, ""));
+        int assistantIndex = messages.Count - 1;
+        string accumulator = "";
+
+        try
+        {
+            await foreach (var update in agent.RunStreamingAsync(history).WithCancellation(streamingCts.Token))
+            {
+                var chunk = update?.ToString();
+                if (string.IsNullOrEmpty(chunk)) continue;
+
+                accumulator += chunk;
+                messages[assistantIndex] = new _ChatMesssage(ChatRole.Assistant, accumulator);
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        finally
+        {
+            isStreaming = false;
+            streamingCts?.Dispose();
+            streamingCts = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}
